@@ -1,6 +1,6 @@
 [package]
-name = "rbase"
-version = "0.2.2"
+name = "rs-mongo-stream"
+version = "0.0.1"
 authors = ["LSH <github@lsh.tech>"]
 edition = "2021"
 description = "Github template to setup the CI and cargo publish"
@@ -8,3 +8,6 @@ license = "GPL-3.0"
 
 
 [dependencies]
+mongodb = { version = "2.0.0", features = ["tokio-runtime"] }
+tokio = { version = "1.0.0", features = ["full"] }
+tokio-stream = { version = "0.1.0" }
