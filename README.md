@@ -27,7 +27,7 @@ Add the crate to your Cargo.toml:
 
 ```toml
 [dependencies]
-rs-mongo-stream = "0.1.0"
+rs-mongo-stream = "0.3.0"
 mongodb = "2.4.0"
 tokio = { version = "1", features = ["full"] }
 ```
@@ -50,23 +50,23 @@ async fn main() -> Result<(), Box<dyn std::error::Error>> {
     let mut stream = MongoStream::new(client.clone(), db);
     
     // Register callbacks for a collection
-    stream.add_callback("users", Event::Insert("".to_string()), |event| {
+    stream.add_callback("users", Event::Insert, |doc| {
         Box::pin(async move {
-            println!("New user inserted: {:?}", event);
+            println!("New user inserted: {:?}", doc);
             // Handle the insertion...
         })
     });
     
-    stream.add_callback("users", Event::Update("".to_string()), |event| {
+    stream.add_callback("users", Event::Update, |doc| {
         Box::pin(async move {
-            println!("User updated: {:?}", event);
+            println!("User updated: {:?}", doc);
             // Handle the update...
         })
     });
     
-    stream.add_callback("users", Event::Delete("".to_string()), |event| {
+    stream.add_callback("users", Event::Delete, |doc| {
         Box::pin(async move {
-            println!("User deleted: {:?}", event);
+            println!("User deleted: {:?}", doc);
             // Handle the deletion...
         })
     });
