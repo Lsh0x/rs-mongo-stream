@@ -27,7 +27,7 @@ Add the crate to your Cargo.toml:
 
 ```toml
 [dependencies]
-rs-mongo-stream = "0.3.0"
+rs-mongo-stream = "0.3.1"
 mongodb = "2.4.0"
 tokio = { version = "1", features = ["full"] }
 ```
