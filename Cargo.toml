@@ -1,6 +1,6 @@
 [package]
 name = "rs-mongo-stream"
-version = "0.2.0"
+version = "0.3.0"
 authors = ["LSH <github@lsh.tech>"]
 edition = "2021"
 description = "Wrapper on mongo to easier the way to handle mongo stream"

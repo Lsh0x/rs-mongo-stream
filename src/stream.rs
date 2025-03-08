@@ -16,12 +16,13 @@ use tokio_stream::{Stream, StreamExt};
 
 use crate::error::MongoStreamError;
 use crate::event::Event;
+use mongodb::bson::Document;
 
-/// Type alias for a callback function that processes MongoDB events.
+/// Type alias for a callback function that processes MongoDB documents.
 ///
-/// Callbacks should be async functions that take an Event reference
+/// Callbacks should be async functions that take a Document reference
 /// and return nothing.
-type CallbackFn = dyn Fn(&Event) -> Pin<Box<dyn Future<Output = ()> + Send>> + Send + Sync;
+type CallbackFn = dyn Fn(&Document) -> Pin<Box<dyn Future<Output = ()> + Send>> + Send + Sync;
 
 /// A collection of callbacks mapped to their respective event types.
 ///
@@ -83,7 +84,7 @@ impl MongoStream {
     /// ```
     pub fn add_callback<F>(&mut self, collection_name: impl Into<String>, event: Event, callback: F)
     where
-        F: Fn(&Event) -> Pin<Box<dyn Future<Output = ()> + Send>> + 'static + Send + Sync,
+        F: Fn(&Document) -> Pin<Box<dyn Future<Output = ()> + Send>> + 'static + Send + Sync,
     {
         let collection_name = collection_name.into();
         let callback_arc = Arc::new(callback);
@@ -111,7 +112,7 @@ impl MongoStream {
 
             callbacks.insert(
                 event,
-                Arc::new(move |_event: &Event| {
+                Arc::new(move |_doc: &Document| {
                     let event_name = event_name.clone();
                     Box::pin(async move {
                         println!("{} event received", event_name);
@@ -250,7 +251,9 @@ impl MongoStream {
                                         let event_type = Event::from(change_stream_event.operation_type);
                                         // Find and execute the appropriate callback
                                         if let Some(callback) = callbacks.get(&event_type) {
-                                            callback(&event_type).await;
+                                            if let Some(doc) = change_stream_event.full_document {
+                                                callback(&doc).await;
+                                            }
                                         }
                                     }
                                     Err(e) => {
@@ -371,7 +374,7 @@ impl Stream for MongoStream {
 #[cfg(test)]
 mod tests {
     use super::*;
-    use mongodb::{options::ClientOptions, Client};
+    use mongodb::{bson::Document, options::ClientOptions, Client};
     use tokio::sync::mpsc;
 
     async fn setup_test_db() -> Database {
@@ -397,7 +400,7 @@ mod tests {
         let mut mongo_stream = MongoStream::new(db);
 
         let (tx, mut rx) = mpsc::channel(1);
-        mongo_stream.add_callback("test_collection", Event::Insert, move |_event| {
+        mongo_stream.add_callback("test_collection", Event::Insert, move |_doc| {
             let tx = tx.clone();
             Box::pin(async move {
                 let _ = tx.send(()).await;
@@ -409,7 +412,8 @@ mod tests {
 
         // Execute the callback
         if let Some(callback) = callbacks.get(&Event::Insert) {
-            callback(&Event::Insert).await;
+            let doc = Document::new();
+            callback(&doc).await;
             assert!(rx.recv().await.is_some());
         }
     }
