@@ -47,7 +47,7 @@ async fn main() -> Result<(), Box<dyn std::error::Error>> {
     let db = client.database("my_database");
     
     // Create the stream monitor
-    let mut stream = MongoStream::new(client.clone(), db);
+    let mut stream = MongoStream::new(db);
     
     // Register callbacks for a collection
     stream.add_callback("users", Event::Insert, |doc| {
